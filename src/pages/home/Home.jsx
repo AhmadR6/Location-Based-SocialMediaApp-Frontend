@@ -33,7 +33,6 @@ const Home = () => {
     top_users = [],
   } = feedQuery.data || {};
 
-
   return (
     <div className="content" id="home-page">
       <div className="content-main">
@@ -53,8 +52,8 @@ const Home = () => {
         </div>
         {feedQuery.isLoading ? (
           <MultiplePostCardSkeleton />
-          // <Loader loading={feedQuery.isLoading} />
-        ) : feedQuery.isError ? (
+        ) : // <Loader loading={feedQuery.isLoading} />
+        feedQuery.isError ? (
           <BadRequest />
         ) : feedSort == "recent" ? (
           new_post.map((post) => (
@@ -89,10 +88,8 @@ const Home = () => {
               <p>Most followed</p>
               <MultipleProfilePreviewSkeleton />
             </section>
-            <AnnouncementSkeleton/>
-  
+            <AnnouncementSkeleton />
           </>
-
         ) : (
           <>
             <section className="side-content-box">
@@ -112,16 +109,13 @@ const Home = () => {
               <ul>
                 <li>Added animations to loading pages</li>
                 <li>Added Skeleton Loading to home page</li>
-
               </ul>
 
-              <p>Last updated: 24 Nov 2024</p>
+              <p>Last updated: 5 May 2025</p>
             </div>
           </>
         )}
-
       </div>
-
     </div>
   );
 };
