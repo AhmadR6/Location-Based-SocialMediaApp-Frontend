@@ -16,6 +16,7 @@ import Chats from "../Chats/Chats";
 import DM from "../../components/DM/DM";
 import NotFound from "../Error/NotFound";
 import Settings from "../Settings/Settings";
+import Map from "../Map/Map";
 // import
 
 //pages
@@ -80,6 +81,10 @@ const router = createBrowserRouter([
           {
             path: "home",
             element: <Home />,
+          },
+          {
+            path: "map", // 👈 New route
+            element: <Map />,
           },
           {
             path: "posts/:postId",
