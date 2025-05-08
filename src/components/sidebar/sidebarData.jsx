@@ -6,6 +6,7 @@ import {
   IconSquareRoundedPlus,
   IconUserCircle,
   IconUserSearch,
+  IconBrandGoogleMaps,
 } from "@tabler/icons-react";
 
 export const sidebarData = [
@@ -13,6 +14,11 @@ export const sidebarData = [
     name: "Home", //display name
     icon: IconHomeFilled,
     link: "/home",
+  },
+  {
+    name: "Map",
+    icon: IconBrandGoogleMaps,
+    link: "/map",
   },
   {
     name: "Create",
