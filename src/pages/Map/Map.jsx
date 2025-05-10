@@ -11,6 +11,7 @@ import { useFetch } from "../../hooks/useFetch";
 import MultiplePostCardSkeleton from "../../components/skeleton/PostCardSkeleton/MultiplePostCardSkeleton";
 import MultipleProfilePreviewSkeleton from "../../components/skeleton/ProfilePreview/MultipleProfilePreivewSkeleton";
 import AnnouncementSkeleton from "../../components/skeleton/Announcement/AnnouncementSkeleton";
+import NearbyUsers from "../../components/NearByUser/NearByUser";
 import MapView from "../../components/MapView/MapView";
 
 const Home = () => {
@@ -54,6 +55,9 @@ const Home = () => {
           </>
         ) : (
           <>
+            <section className="side-content-box">
+              <NearbyUsers />
+            </section>
             <section className="side-content-box">
               <p>Latest users</p>
               {new_users.map((user) => (

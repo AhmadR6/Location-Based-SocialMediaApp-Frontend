@@ -3,13 +3,14 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { sendUserLocation, fetchAllLocations } from "../../utils/location"; // Import sendUserLocation function
 import { useAuthContext } from "../../hooks/useAuthContext";
+import createPopup from "../mapPopup/MapPopup";
 
 const MapView = () => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
   const { user } = useAuthContext();
-
+  console.log(user);
   useEffect(() => {
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
@@ -17,7 +18,7 @@ const MapView = () => {
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v11",
       center: [73.078909, 31.418854], // Default center
-      zoom: 12,
+      zoom: 13,
     });
 
     // Get and set user's current location
@@ -35,7 +36,7 @@ const MapView = () => {
         // Add marker for the user
         new mapboxgl.Marker({ color: "blue" })
           .setLngLat([longitude, latitude])
-          .setPopup(new mapboxgl.Popup().setText("📍 You"))
+          .setPopup(createPopup(user)) // Create a popup with user info
           .addTo(mapRef.current);
       },
       (error) => {
@@ -47,11 +48,12 @@ const MapView = () => {
     const loadMarkers = async () => {
       try {
         const locations = await fetchAllLocations();
-        console.log(`locations are ${locations}`);
+
         locations.forEach(({ latitude, longitude, user }) => {
+          console.log("Adding marker for user:", user);
           new mapboxgl.Marker()
             .setLngLat([longitude, latitude])
-            .setPopup(new mapboxgl.Popup().setText(user.username)) // Optional: Show username in popup
+            .setPopup(createPopup(user)) // Optional: Show username in popup
             .addTo(mapRef.current); // Add marker to map
         });
       } catch (error) {
