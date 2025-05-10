@@ -1,10 +1,10 @@
 // Update the base URL to point to your backend server (assuming backend runs on port 5000)
-const API_URL = "http://localhost:5000/api/location";
+const API_URL = `${import.meta.env.VITE_API_URL}/location`;
 
 // You need to pass the user or token to this function
 const sendUserLocation = async (latitude, longitude, token) => {
   try {
-    const response = await fetch(API_URL, {
+    const response = await fetch(`${API_URL}/updateLocation`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,7 +24,7 @@ const sendUserLocation = async (latitude, longitude, token) => {
 };
 
 const fetchAllLocations = async () => {
-  const res = await fetch(API_URL);
+  const res = await fetch(`${API_URL}/getAllLocations`);
   const data = await res.json();
   return data; // An array of location objects
 };

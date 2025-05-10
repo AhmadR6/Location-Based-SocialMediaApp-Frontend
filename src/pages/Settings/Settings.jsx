@@ -1,6 +1,7 @@
 import { IconLogout } from "@tabler/icons-react";
 import BackNav from "../../components/backNav/BackNav";
 import { useAuthContext } from "../../hooks/useAuthContext";
+import UserLocationSettings from "../../components/UserLocationSetting/UserLocationSetting";
 import "./settings.scss";
 const Settings = () => {
   const { dispatch } = useAuthContext();
@@ -19,6 +20,8 @@ const Settings = () => {
             <IconLogout />
             <p>Logout</p>
           </div>
+
+          <UserLocationSettings />
         </div>
       </div>
     </div>
