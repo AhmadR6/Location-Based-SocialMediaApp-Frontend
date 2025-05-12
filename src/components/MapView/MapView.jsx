@@ -1,75 +1,89 @@
 import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { sendUserLocation, fetchAllLocations } from "../../utils/location"; // Import sendUserLocation function
+import { sendUserLocation, fetchAllLocations } from "../../utils/location";
 import { useAuthContext } from "../../hooks/useAuthContext";
-import createPopup from "../mapPopup/MapPopup";
-
+import createPopup from "../mapPopup/createPopup.jsx";
+import { useNavigate } from "react-router-dom";
 const MapView = () => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
   const { user } = useAuthContext();
-  console.log(user);
+  const markersRef = useRef([]); // To track all markers for cleanup
+  const navigate = useNavigate();
   useEffect(() => {
+    if (!user?.token) return; // Exit if no user token
+
     mapboxgl.accessToken = import.meta.env.VITE_MAPBOX_TOKEN;
 
+    // Initialize map
     mapRef.current = new mapboxgl.Map({
       container: mapContainerRef.current,
       style: "mapbox://styles/mapbox/streets-v11",
-      center: [73.078909, 31.418854], // Default center
+      center: [73.078909, 31.418854],
       zoom: 13,
     });
 
-    // Get and set user's current location
+    // Cleanup function
+    return () => {
+      markersRef.current.forEach((marker) => marker.remove());
+      mapRef.current?.remove();
+    };
+  }, [user?.token]);
+
+  useEffect(() => {
+    if (!mapRef.current || !user?.token) return;
+
+    // Handle user's current location
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
         setUserLocation([longitude, latitude]);
 
-        // Send location to backend
-        await sendUserLocation(latitude, longitude, user.token); // Send user's location to backend
+        try {
+          await sendUserLocation(latitude, longitude, user.token);
+          mapRef.current.setCenter([longitude, latitude]);
 
-        // Set map center to user's location
-        mapRef.current.setCenter([longitude, latitude]);
+          // Add current user's marker (blue)
+          const userMarker = new mapboxgl.Marker({ color: "blue" })
+            .setLngLat([longitude, latitude])
+            .setPopup(createPopup(user, navigate))
+            .addTo(mapRef.current);
 
-        // Add marker for the user
-        new mapboxgl.Marker({ color: "blue" })
-          .setLngLat([longitude, latitude])
-          .setPopup(createPopup(user)) // Create a popup with user info
-          .addTo(mapRef.current);
+          markersRef.current.push(userMarker);
+        } catch (error) {
+          console.error("Error sending location:", error);
+        }
       },
       (error) => {
-        console.error("Error getting user location:", error);
+        console.error("Geolocation error:", error);
       },
     );
 
-    // Function to load all markers (locations) from backend
+    // Load all other users' markers
     const loadMarkers = async () => {
       try {
         const locations = await fetchAllLocations();
 
-        locations.forEach(({ latitude, longitude, user }) => {
-          console.log("Adding marker for user:", user);
-          new mapboxgl.Marker()
-            .setLngLat([longitude, latitude])
-            .setPopup(createPopup(user)) // Optional: Show username in popup
-            .addTo(mapRef.current); // Add marker to map
+        locations.forEach((location) => {
+          // Skip current user's location (already added)
+          if (location.user._id === user.id) return;
+
+          const marker = new mapboxgl.Marker()
+            .setLngLat([location.longitude, location.latitude])
+            .setPopup(createPopup(location.user, navigate))
+            .addTo(mapRef.current);
+
+          markersRef.current.push(marker);
         });
       } catch (error) {
         console.error("Error loading markers:", error);
       }
     };
 
-    // Load all markers when the component mounts
-    mapRef.current.on("load", () => {
-      loadMarkers(); // Load markers only after the map has fully loaded
-    });
-    // Cleanup on unmount
-    return () => {
-      mapRef.current?.remove(); // Remove the map instance
-    };
-  }, [user.token]); // Depend on user.token to rerun when the user token changes
+    mapRef.current.on("load", loadMarkers);
+  }, [user]);
 
   return (
     <div
