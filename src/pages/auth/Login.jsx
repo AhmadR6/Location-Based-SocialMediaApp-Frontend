@@ -41,13 +41,13 @@ const Login = () => {
     try {
       const username = inputUser ? inputUser : e?.target.username.value;
       const password = inputPass ? inputPass : e?.target.password.value;
-      // const data = await myFetch("/auth/local/login", {
-      //   method: "POST",
-      //   body: JSON.stringify({
-      //     username,
-      //     password,
-      //   }),
-      // });
+      const data = await myFetch("/auth/local/login", {
+        method: "POST",
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
       dispatch({ type: "LOGIN", payload: data }); //username, id , profilepicture, token
       localStorage.setItem("user", JSON.stringify(data));
       navigate("/p/home");
