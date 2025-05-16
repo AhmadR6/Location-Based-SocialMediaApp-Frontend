@@ -28,5 +28,12 @@ const fetchAllLocations = async () => {
   const data = await res.json();
   return data; // An array of location objects
 };
+const nearbyUserLocations = async (latitude, longitude, radius) => {
+  const res = await fetch(
+    `${API_URL}/nearbyusers?lat=${latitude}&lon=${longitude}&radius=${radius}`,
+  );
+  const data = await res.json();
+  return data; // An array of location objects
+};
 
-export { sendUserLocation, fetchAllLocations };
+export { sendUserLocation, fetchAllLocations, nearbyUserLocations };

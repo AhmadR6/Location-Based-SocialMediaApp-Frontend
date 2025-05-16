@@ -7,6 +7,7 @@ import {
   IconUserCircle,
   IconUserSearch,
   IconBrandGoogleMaps,
+  IconUsersGroup,
 } from "@tabler/icons-react";
 
 export const sidebarData = [
@@ -34,6 +35,11 @@ export const sidebarData = [
     name: "Message",
     icon: IconMessages,
     link: "/message",
+  },
+  {
+    name: "GroupChats",
+    icon: IconUsersGroup,
+    link: "/groupChat",
   },
   {
     name: "Likes",

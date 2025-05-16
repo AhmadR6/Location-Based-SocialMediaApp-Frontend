@@ -17,6 +17,7 @@ import DM from "../../components/DM/DM";
 import NotFound from "../Error/NotFound";
 import Settings from "../Settings/Settings";
 import Map from "../Map/Map";
+import GroupChats from "../GroupChat/GroupChat";
 // import
 
 //pages
@@ -113,6 +114,10 @@ const router = createBrowserRouter([
           {
             path: "message",
             element: <Chats />,
+          },
+          {
+            path: "groupChat",
+            element: <GroupChats />,
           },
           {
             path: "message/:chatId",
