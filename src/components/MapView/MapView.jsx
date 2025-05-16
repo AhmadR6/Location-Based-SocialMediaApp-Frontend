@@ -40,7 +40,59 @@ const MapView = () => {
       mapRef.current?.remove();
     };
   }, [user?.token]);
+  const requestLocation = () => {
+    if (!mapRef.current || !user?.token) return;
 
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation([longitude, latitude]);
+
+        try {
+          await sendUserLocation(latitude, longitude, user.token);
+          mapRef.current.setCenter([longitude, latitude]);
+
+          const userMarker = new mapboxgl.Marker({ color: "green" })
+            .setLngLat([longitude, latitude])
+            .setPopup(createPopup(user, navigate))
+            .addTo(mapRef.current);
+
+          markersRef.current.push(userMarker);
+        } catch (error) {
+          console.error("Error sending location:", error);
+        }
+      },
+      (error) => {
+        console.error("Geolocation error:", error);
+      },
+    );
+
+    const loadMarkers = async () => {
+      try {
+        const locations = await fetchAllLocations();
+        locations.forEach((location) => {
+          console.log("Location:", location);
+          if (location.user._id === user.id) return;
+          const color = location.user.online ? "green" : "red";
+
+          const marker = new mapboxgl.Marker({ color: color })
+            .setLngLat([location.longitude, location.latitude])
+            .setPopup(createPopup(location.user, navigate))
+            .addTo(mapRef.current);
+
+          markersRef.current.push(marker);
+        });
+      } catch (error) {
+        console.error("Error loading markers:", error);
+      }
+    };
+
+    mapRef.current.on("load", loadMarkers);
+
+    return () => {
+      mapRef.current.off("load", loadMarkers);
+    };
+  };
   useEffect(() => {
     if (!mapRef.current || !user?.token) return;
 
@@ -96,11 +148,14 @@ const MapView = () => {
   }, [user?.id, user?.token, navigate]);
 
   return (
-    <div
-      ref={mapContainerRef}
-      style={{ height: "80vh", width: "100%" }}
-      className="map-container"
-    />
+    <div>
+      <div
+        ref={mapContainerRef}
+        style={{ height: "80vh", width: "100%" }}
+        className="map-container"
+      />
+      <button onClick={requestLocation}>Get my Location</button>
+    </div>
   );
 };
 export default MapView;
