@@ -109,12 +109,14 @@
       // border: 1px solid red;
       width: 100%;
       max-width: 100vw;
-      padding: 0.5rem 0.5rem;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
       opacity: 1;
       margin-top: auto;
       flex-direction: row;
       align-items: center;
       justify-content: space-evenly;
+      gap: 0;
     }
     li {
       // border: 1px solid red;
@@ -127,7 +129,7 @@
       svg {
         margin-right: 0 !important;
         // border: 1px solid red;
-        width: 18px;
+        width: 15px;
         height: 24px;
       }
     }
