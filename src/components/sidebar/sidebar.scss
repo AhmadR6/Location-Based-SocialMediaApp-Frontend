@@ -95,7 +95,7 @@
     width: 100%;
     max-width: 100%;
     position: fixed;
-    height: 3rem;
+    height: 4rem;
     min-height: fit-content;
     bottom: 0;
     // top:0;
@@ -109,12 +109,12 @@
       // border: 1px solid red;
       width: 100%;
       max-width: 100vw;
-      padding: 0.5rem 1.5rem;
+      padding: 0.5rem 0.5rem;
       opacity: 1;
       margin-top: auto;
       flex-direction: row;
       align-items: center;
-      justify-content: space-around;
+      justify-content: space-evenly;
     }
     li {
       // border: 1px solid red;
@@ -122,11 +122,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
+      flex: 1;
 
       svg {
         margin-right: 0 !important;
         // border: 1px solid red;
-        width: 18px;
+        width: 15px;
         height: 18px;
       }
     }
