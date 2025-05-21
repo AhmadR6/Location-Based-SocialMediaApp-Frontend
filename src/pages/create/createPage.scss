@@ -1,0 +1,15 @@
+.main-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  padding: 20px;
+  align-items: center;
+}
+.main-content > button {
+  min-height: 20%;
+  min-width: 80%;
+}
+.main-content > button:hover {
+  transform: scale(1.01);
+  background-color: var(--color-neutral-bg);
+}
