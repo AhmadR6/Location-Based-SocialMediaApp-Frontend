@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import "./CreateEvents.scss";
+import "./createEvents.scss";
 import { Form, useNavigate } from "react-router-dom";
 import TextareaAutosize from "react-textarea-autosize";
 import { toast } from "react-toastify";
