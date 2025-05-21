@@ -17,7 +17,7 @@ const NearbyUsers = () => {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            console.log("📍 Browser geolocation:", { latitude, longitude });
+            // console.log("📍 Browser geolocation:", { latitude, longitude });
             setUserLocation({ latitude, longitude });
           },
           (error) => {
@@ -49,7 +49,7 @@ const NearbyUsers = () => {
   const latitude = userLocation?.latitude;
   const longitude = userLocation?.longitude;
 
-  console.log("📍 Final location for API call:", { latitude, longitude });
+  // console.log("📍 Final location for API call:", { latitude, longitude });
 
   // Construct the API URL
   const apiUrl = `/location/nearbyusers?lat=${latitude}&lon=${longitude}&radius=10`;
@@ -58,10 +58,10 @@ const NearbyUsers = () => {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["nearby-users", latitude, longitude],
     queryFn: async () => {
-      console.log("🔗 Calling API:", apiUrl);
+      // console.log("🔗 Calling API:", apiUrl);
       try {
         const result = await myFetch(apiUrl);
-        console.log("✅ API response:", result);
+        // console.log("✅ API response:", result);
         return result;
       } catch (err) {
         console.error("❌ API error:", err);
