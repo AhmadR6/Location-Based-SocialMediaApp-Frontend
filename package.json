@@ -18,6 +18,7 @@
     "dotenv-flow": "^4.1.0",
     "mapbox-gl": "^3.11.1",
     "react": "^18.3.1",
+    "react-datepicker": "^8.3.0",
     "react-dom": "^18.3.1",
     "react-map-gl": "^8.0.4",
     "react-router-dom": "^6.26.1",
