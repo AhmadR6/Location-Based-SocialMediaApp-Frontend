@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import "./CreatePage.scss";
+import "./createPage.scss";
 
 const CreatePage = () => {
   const navigate = useNavigate();
