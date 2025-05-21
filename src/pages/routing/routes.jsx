@@ -6,7 +6,8 @@ import AuthPage from "../auth/AuthLayout";
 import Login from "../auth/Login";
 import Signup from "../auth/Signup";
 import SetUsername from "../auth/SetUsername";
-import CreatePost from "../createPost/CreatePost";
+import CreatePage from "../create/create";
+import CreatePost from "../../components/createPost/CreatePost";
 import ViewPost from "../viewPost/ViewPost";
 import UserProfile from "../userProfile/UserProfile";
 import EditProfile from "../EditProfile/EditProfile";
@@ -18,6 +19,7 @@ import NotFound from "../Error/NotFound";
 import Settings from "../Settings/Settings";
 import Map from "../Map/Map";
 import GroupChats from "../GroupChat/GroupChat";
+import CreateEvents from "../../components/CreateEvents/CreateEvents";
 // import
 
 //pages
@@ -67,7 +69,6 @@ const router = createBrowserRouter([
         path: "",
         element: <Navigate to="/p/home" />, //create the UI for the feed page
       },
-
       {
         path: "about",
         element: <p></p>,
@@ -109,8 +110,17 @@ const router = createBrowserRouter([
           },
           {
             path: "create",
+            element: <CreatePage />,
+          },
+          {
+            path: "/p/create/post",
             element: <CreatePost />,
           },
+          {
+            path: "/p/create/events",
+            element: <CreateEvents />,
+          },
+
           {
             path: "message",
             element: <Chats />,
