@@ -3,8 +3,10 @@ import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { sendUserLocation, fetchAllLocations } from "../../utils/location";
+import { fetchEvents, joinEvent } from "../../utils/events.js";
 import { useAuthContext } from "../../hooks/useAuthContext";
 import createPopup from "../mapPopup/createPopup.jsx";
+import EventsPopup from "../mapPopup/EventsPopup.jsx";
 import { useNavigate } from "react-router-dom";
 
 const MapView = () => {
@@ -40,60 +42,12 @@ const MapView = () => {
       mapRef.current?.remove();
     };
   }, [user?.token]);
-  const requestLocation = () => {
-    if (!mapRef.current || !user?.token) return;
 
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        const { latitude, longitude } = position.coords;
-        setUserLocation([longitude, latitude]);
-
-        try {
-          await sendUserLocation(latitude, longitude, user.token);
-          mapRef.current.setCenter([longitude, latitude]);
-
-          const userMarker = new mapboxgl.Marker({ color: "green" })
-            .setLngLat([longitude, latitude])
-            .setPopup(createPopup(user, navigate))
-            .addTo(mapRef.current);
-
-          markersRef.current.push(userMarker);
-        } catch (error) {
-          console.error("Error sending location:", error);
-        }
-      },
-      (error) => {
-        console.error("Geolocation error:", error);
-      },
-    );
-
-    const loadMarkers = async () => {
-      try {
-        const locations = await fetchAllLocations();
-        locations.forEach((location) => {
-          console.log("Location:", location);
-          if (location.user._id === user.id) return;
-          const color = location.user.online ? "green" : "red";
-
-          const marker = new mapboxgl.Marker({ color: color })
-            .setLngLat([location.longitude, location.latitude])
-            .setPopup(createPopup(location.user, navigate))
-            .addTo(mapRef.current);
-
-          markersRef.current.push(marker);
-        });
-      } catch (error) {
-        console.error("Error loading markers:", error);
-      }
-    };
-
-    mapRef.current.on("load", loadMarkers);
-
-    return () => {
-      mapRef.current.off("load", loadMarkers);
-    };
-  };
   useEffect(() => {
+    requestLocation();
+  }, [user?.id, user?.token, navigate]);
+
+  function requestLocation() {
     if (!mapRef.current || !user?.token) return;
 
     navigator.geolocation.getCurrentPosition(
@@ -104,13 +58,15 @@ const MapView = () => {
         try {
           await sendUserLocation(latitude, longitude, user.token);
           mapRef.current.setCenter([longitude, latitude]);
-
           const userMarker = new mapboxgl.Marker({ color: "green" })
             .setLngLat([longitude, latitude])
             .setPopup(createPopup(user, navigate))
             .addTo(mapRef.current);
 
           markersRef.current.push(userMarker);
+
+          // Load markers only after we have the user's location
+          loadMarkers(latitude, longitude);
         } catch (error) {
           console.error("Error sending location:", error);
         }
@@ -119,33 +75,46 @@ const MapView = () => {
         console.error("Geolocation error:", error);
       },
     );
+  }
 
-    const loadMarkers = async () => {
+  // Move loadMarkers outside requestLocation
+  const loadMarkers = async (latitude, longitude) => {
+    try {
+      const locations = await fetchAllLocations();
+      locations.forEach((location) => {
+        // console.log("Location:", location);
+        if (location.user._id === user.id) return;
+        const color = location.user.online ? "green" : "red";
+
+        const marker = new mapboxgl.Marker({ color: color })
+          .setLngLat([location.longitude, location.latitude])
+          .setPopup(createPopup(location.user, navigate))
+          .addTo(mapRef.current);
+
+        markersRef.current.push(marker);
+      });
+
       try {
-        const locations = await fetchAllLocations();
-        locations.forEach((location) => {
-          console.log("Location:", location);
-          if (location.user._id === user.id) return;
-          const color = location.user.online ? "green" : "red";
+        // Use the provided latitude and longitude instead of userLocation state
+        const events = await fetchEvents(latitude, longitude, user.token);
+        events.forEach((event) => {
+          // console.log("Event:", event);
 
-          const marker = new mapboxgl.Marker({ color: color })
-            .setLngLat([location.longitude, location.latitude])
-            .setPopup(createPopup(location.user, navigate))
+          const eventColor = "blue";
+          const marker = new mapboxgl.Marker({ color: eventColor })
+            .setLngLat([event.longitude, event.latitude])
+            .setPopup(EventsPopup(event, user))
             .addTo(mapRef.current);
 
           markersRef.current.push(marker);
         });
-      } catch (error) {
-        console.error("Error loading markers:", error);
+      } catch (eventError) {
+        console.error("Error loading event markers:", eventError);
       }
-    };
-
-    mapRef.current.on("load", loadMarkers);
-
-    return () => {
-      mapRef.current.off("load", loadMarkers);
-    };
-  }, [user?.id, user?.token, navigate]);
+    } catch (error) {
+      console.error("Error loading markers:", error);
+    }
+  };
 
   return (
     <div>
