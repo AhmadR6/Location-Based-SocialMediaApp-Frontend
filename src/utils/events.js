@@ -74,4 +74,27 @@ const joinEvent = async (eventId, token) => {
   }
 };
 
-export { fetchEvents, createOrUpdateEvent, joinEvent };
+const unjoinEvent = async (eventId, token) => {
+  try {
+    const response = await fetch(`${API_URL}/${eventId}/unjoin`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || "Failed to unjoin event");
+    }
+
+    const data = await response.json();
+    return data; // Success message or updated event
+  } catch (error) {
+    console.error("Unjoin event failed:", error);
+    throw error;
+  }
+};
+
+export { fetchEvents, createOrUpdateEvent, joinEvent, unjoinEvent };
