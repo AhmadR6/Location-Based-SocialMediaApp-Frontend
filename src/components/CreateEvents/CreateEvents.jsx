@@ -184,7 +184,7 @@ const CreateEvent = () => {
             <div
               ref={mapContainerRef}
               className="map-container"
-              style={{ height: "300px", width: "70%" }}
+              style={{ height: "300px", width: "80%" }}
             />
 
             <div className="form-group">
