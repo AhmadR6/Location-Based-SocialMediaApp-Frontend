@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import mapboxgl from "mapbox-gl";
 import { format } from "date-fns";
@@ -8,11 +8,11 @@ import {
   IconClock,
   IconInfoCircle,
 } from "@tabler/icons-react";
-import { joinEvent } from "../../utils/events";
+import { joinEvent, unjoinEvent } from "../../utils/events";
 /**
  * EventPopup component for displaying event information in a map popup
  * @param {Object} event - Event object containing details to display
- * @param {Function} navigate - Navigation function to handle button clicks
+ * @param {Object} user - User object containing user details including token
  */
 export default function createEventPopup(event, user) {
   // Create container div for the popup
@@ -23,6 +23,42 @@ export default function createEventPopup(event, user) {
 
   // Define the EventPopup React component
   const EventPopupContent = () => {
+    // State to track if the user has joined the event
+    const [hasJoined, setHasJoined] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Fetch attendance status when component mounts
+    useEffect(() => {
+      const checkAttendance = async () => {
+        try {
+          // Assuming the API supports a GET request to check if the user has joined
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/events/${event.id}/attendance`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${user.token}`,
+              },
+            },
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to check attendance");
+          }
+
+          const data = await response.json();
+          setHasJoined(data.hasJoined); // Assuming API returns { hasJoined: boolean }
+        } catch (error) {
+          console.error("Error checking attendance:", error);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      checkAttendance();
+    }, [event.id, user.token]);
+
     // Format the date and time
     const eventDate = new Date(event.eventDate);
     const formattedDate = format(eventDate, "EEEE, MMMM d, yyyy");
@@ -34,13 +70,23 @@ export default function createEventPopup(event, user) {
         ? `${Math.round(event.distance)} m`
         : `${(event.distance / 1000).toFixed(1)} km`;
 
-    // Handle view details click
-    const handleJoinEvent = () => {
+    // Handle join/unjoin toggle
+    const handleToggleJoin = async () => {
       try {
-        joinEvent(event.id, user.token);
-        console.log("Joined event");
+        if (hasJoined) {
+          await unjoinEvent(event.id, user.token);
+          setHasJoined(false);
+          console.log("Unjoined event");
+        } else {
+          await joinEvent(event.id, user.token);
+          setHasJoined(true);
+          console.log("Joined event");
+        }
       } catch (error) {
-        console.error("Error Joining event", error);
+        console.error(
+          `Error ${hasJoined ? "unjoining" : "joining"} event:`,
+          error,
+        );
       }
     };
 
@@ -70,8 +116,12 @@ export default function createEventPopup(event, user) {
           </div>
         )}
 
-        <button className="event-popup-button" onClick={handleJoinEvent}>
-          Join event
+        <button
+          className="event-popup-button"
+          onClick={handleToggleJoin}
+          disabled={isLoading}
+        >
+          {isLoading ? "Loading..." : hasJoined ? "Unjoin event" : "Join event"}
         </button>
       </div>
     );
@@ -165,6 +215,12 @@ function addPopupStyles() {
       
       .event-popup-button:hover {
         background-color: #565565;
+      }
+      
+      .event-popup-button:disabled {
+        background-color: #3a3a3a;
+        cursor: not-allowed;
+        opacity: 0.6;
       }
       
       .mapboxgl-popup-content {
