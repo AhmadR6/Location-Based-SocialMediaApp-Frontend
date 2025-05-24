@@ -117,7 +117,7 @@ const Login = () => {
         <span>or</span>
       </p>
 
-      {/* <button
+      <button
         className="google"
         onClick={() => {
           window.location.href = `${API_URL}/auth/oauth/google`;
@@ -125,7 +125,7 @@ const Login = () => {
       >
         <img className="google-icon" src={GoogleLogo} alt="" />
         <span>Continue with Google</span>
-      </button> */}
+      </button>
     </>
   );
 };
