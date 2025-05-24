@@ -11,8 +11,8 @@ import {
   IconMapPin,
 } from "@tabler/icons-react";
 import { createOrUpdateEvent } from "../../utils/events";
-import Loader from "../../components/Loaders/Loader";
-import BackNav from "../../components/backNav/BackNav";
+import Loader from "../Loaders/Loader";
+import BackNav from "../backNav/BackNav";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { useAuthContext } from "../../hooks/useAuthContext";
@@ -28,7 +28,7 @@ const CreateEvent = () => {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    eventDate: "",
+    eventDate: null, // Changed to null initially
     latitude: 31.42,
     longitude: 73.08,
   });
@@ -37,11 +37,18 @@ const CreateEvent = () => {
   const token = user.token;
 
   const createEventMutation = useMutation({
-    mutationFn: () => createOrUpdateEvent(formData, token),
+    mutationFn: () => {
+      // Format the date properly for backend
+      const formattedData = {
+        ...formData,
+        eventDate: formData.eventDate ? formData.eventDate.toISOString() : null,
+      };
+      return createOrUpdateEvent(formattedData, token);
+    },
     onSuccess: () => {
       toast.success("Event created");
       queryClient.invalidateQueries(["events"]);
-      navigate("/p/home");
+      navigate("/p/map");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to create event");
@@ -49,13 +56,13 @@ const CreateEvent = () => {
   });
 
   const handleMapClick = useCallback((e) => {
-    e.preventDefault(); // Prevent default behavior
+    e.preventDefault();
     const { lng, lat } = e.lngLat;
     markerRef.current.setLngLat([lng, lat]);
     setFormData((prevFormData) => ({
       ...prevFormData,
-      latitude: lat.toFixed(6),
-      longitude: lng.toFixed(6),
+      latitude: parseFloat(lat.toFixed(6)),
+      longitude: parseFloat(lng.toFixed(6)),
     }));
   }, []);
 
@@ -63,8 +70,8 @@ const CreateEvent = () => {
     const lngLat = markerRef.current.getLngLat();
     setFormData((prevFormData) => ({
       ...prevFormData,
-      latitude: lngLat.lat.toFixed(6),
-      longitude: lngLat.lng.toFixed(6),
+      latitude: parseFloat(lngLat.lat.toFixed(6)),
+      longitude: parseFloat(lngLat.lng.toFixed(6)),
     }));
   }, []);
 
@@ -103,17 +110,32 @@ const CreateEvent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const { title, description, eventDate, latitude, longitude } = formData;
+
     if (!title || !eventDate || !latitude || !longitude) {
       setError("Please fill all required fields");
       return;
     }
+
+    // Check if event date is in the future
+    const now = new Date();
+    if (eventDate <= now) {
+      setError("Event date must be in the future");
+      return;
+    }
+
+    setError(""); // Clear any previous errors
     createEventMutation.mutate();
   };
 
   const handleDateChange = (date) => {
-    // Format date to match datetime-local (YYYY-MM-DDTHH:mm)
-    const formattedDate = date ? date.toISOString().slice(0, 16) : "";
-    setFormData({ ...formData, eventDate: formattedDate });
+    setFormData({ ...formData, eventDate: date });
+  };
+
+  // Get minimum date (current time + 1 hour to prevent scheduling events too soon)
+  const getMinDate = () => {
+    const now = new Date();
+    now.setHours(now.getHours() + 1);
+    return now;
   };
 
   return (
@@ -141,16 +163,17 @@ const CreateEvent = () => {
           <div className="form-group">
             <IconCalendarEvent size="18px" />
             <DatePicker
-              selected={
-                formData.eventDate ? new Date(formData.eventDate) : null
-              }
+              selected={formData.eventDate}
               onChange={handleDateChange}
               showTimeSelect
-              dateFormat="yyyy-MM-dd'T'HH:mm"
+              timeIntervals={15}
+              minDate={getMinDate()}
+              dateFormat="MMMM d, yyyy h:mm aa"
               placeholderText="Select date and time"
               required
               className="input"
               calendarClassName="custom-calendar"
+              timeCaption="Time"
             />
           </div>
           <div className="map-group">
@@ -195,16 +218,12 @@ const CreateEvent = () => {
             </button>
           </div>
         </Form>
-        <p className="error-box">
-          {error ? (
-            <>
-              <IconAlertOctagon size="18px" />
-              {error}
-            </>
-          ) : (
-            ""
-          )}
-        </p>
+        {error && (
+          <p className="error-box">
+            <IconAlertOctagon size="18px" />
+            {error}
+          </p>
+        )}
       </div>
       <div></div>
     </div>
