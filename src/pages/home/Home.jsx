@@ -48,7 +48,7 @@ const Home = () => {
             onClick={() => setFeedSort("recommended")}
             className={feedSort === "recommended" ? "selected" : ""}
           >
-            Recommended
+            For You
           </span>
           <span
             onClick={() => setFeedSort("recent")}
