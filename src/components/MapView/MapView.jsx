@@ -9,7 +9,7 @@ import createPopup from "../mapPopup/createPopup.jsx";
 import EventsPopup from "../mapPopup/EventsPopup.jsx";
 import { useNavigate } from "react-router-dom";
 
-const MapView = () => {
+const MapView = ({ refresh, setRefresh }) => {
   const mapContainerRef = useRef(null);
   const mapRef = useRef(null);
   const [userLocation, setUserLocation] = useState(null);
@@ -103,7 +103,7 @@ const MapView = () => {
           const eventColor = "blue";
           const marker = new mapboxgl.Marker({ color: eventColor })
             .setLngLat([event.longitude, event.latitude])
-            .setPopup(EventsPopup(event, user))
+            .setPopup(EventsPopup(event, user, refresh, setRefresh))
             .addTo(mapRef.current);
 
           markersRef.current.push(marker);

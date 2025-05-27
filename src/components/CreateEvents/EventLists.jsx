@@ -12,7 +12,7 @@ import {
   IconLoader2,
 } from "@tabler/icons-react";
 
-const EventsList = () => {
+const EventsList = ({ refresh, setRefresh }) => {
   const handleFetch = useFetch();
 
   const [location, setLocation] = useState({ latitude: null, longitude: null });
@@ -39,7 +39,7 @@ const EventsList = () => {
     error,
     isError,
   } = useQuery({
-    queryKey: ["events", location],
+    queryKey: ["events", location, refresh],
     queryFn: async () => {
       const query =
         location.latitude && location.longitude

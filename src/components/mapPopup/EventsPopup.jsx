@@ -14,7 +14,7 @@ import { joinEvent, unjoinEvent } from "../../utils/events";
  * @param {Object} event - Event object containing details to display
  * @param {Object} user - User object containing user details including token
  */
-export default function createEventPopup(event, user) {
+export default function createEventPopup(event, user, refresh, setRefresh) {
   // Create container div for the popup
   const container = document.createElement("div");
 
@@ -76,10 +76,12 @@ export default function createEventPopup(event, user) {
         if (hasJoined) {
           await unjoinEvent(event.id, user.token);
           setHasJoined(false);
+          setRefresh((prev) => !prev); // Trigger refresh in parent component
           console.log("Unjoined event");
         } else {
           await joinEvent(event.id, user.token);
           setHasJoined(true);
+          setRefresh((prev) => !prev); // Trigger refresh in parent component
           console.log("Joined event");
         }
       } catch (error) {
