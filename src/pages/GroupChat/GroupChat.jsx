@@ -245,6 +245,14 @@ const GroupChat = () => {
       </div>
     );
   }
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (input.trim()) {
+        sendMessageMutation.mutate(input);
+      }
+    }
+  };
 
   return (
     <div className="content DM">
@@ -295,6 +303,7 @@ const GroupChat = () => {
               maxRows={3}
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
               placeholder={
                 currentZone
                   ? "Message nearby users..."
