@@ -27,12 +27,16 @@ const GroupChat = () => {
   const [onlineUsers, setOnlineUsers] = useState(0);
   const [isConnected, setIsConnected] = useState(false);
   const socketRef = useRef(null);
+  const currentZoneRef = useRef(null);
   const bottomChatRef = useRef(null);
   const inputRef = useRef(null);
   const lastPositionRef = useRef(null);
   const pfp_url = useLocation().state?.url;
 
-  // Initialize socket connection
+  useEffect(() => {
+    currentZoneRef.current = currentZone;
+  }, [currentZone]);
+
   useEffect(() => {
     socketRef.current = io(VITE_SERVER_URL, {
       reconnection: true,
@@ -50,7 +54,6 @@ const GroupChat = () => {
 
     socketRef.current.on("disconnect", () => {
       setIsConnected(false);
-      // toast.warn("Disconnected from chat service");
     });
 
     socketRef.current.on("connect_error", (err) => {
@@ -63,13 +66,11 @@ const GroupChat = () => {
     };
   }, []);
 
-  // Fetch initial messages and sync with socket
   const { isPending, isError } = useQuery({
     queryFn: () => myFetch(`/zone-messages?zoneId=${currentZone?.id}`),
     queryKey: ["zoneMessages", currentZone?.id],
     enabled: !!currentZone?.id && isConnected,
     onSuccess: (data) => {
-      console.log("Fetched messages:", data);
       setMessages(
         data?.messages?.map((msg) => ({
           ...msg,
@@ -82,23 +83,20 @@ const GroupChat = () => {
       toast.error("Failed to load messages");
     },
     refetchOnWindowFocus: false,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
   });
 
-  // Geolocation and zone joining
   useEffect(() => {
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
         const currentPosition = { latitude, longitude };
 
-        // Only emit if position changed significantly (> 100m)
         if (
           !lastPositionRef.current ||
           calculateDistance(lastPositionRef.current, currentPosition) > 0.1
         ) {
           lastPositionRef.current = currentPosition;
-          console.log("Emitting join-location-chat", { latitude, longitude });
           socketRef.current.emit("join-location-chat", {
             lat: latitude,
             lng: longitude,
@@ -118,14 +116,12 @@ const GroupChat = () => {
     );
 
     socketRef.current.on("location-chat-joined", (zoneData) => {
-      console.log("Joined zone:", zoneData);
       setCurrentZone({
         id: zoneData.id,
         location: zoneData.name || `Zone ${zoneData.id}`,
         coords: { lat: zoneData.latitude, lng: zoneData.longitude },
       });
       setOnlineUsers(zoneData.onlineUsers || 0);
-      // Sync messages from zoneData if provided
       if (zoneData.messages) {
         setMessages(
           zoneData.messages.map((msg) => ({
@@ -137,7 +133,7 @@ const GroupChat = () => {
     });
 
     socketRef.current.on("users-update", ({ zoneId, onlineUsers }) => {
-      if (currentZone?.id === zoneId) {
+      if (currentZoneRef.current?.id === zoneId) {
         setOnlineUsers(onlineUsers);
       }
     });
@@ -149,16 +145,10 @@ const GroupChat = () => {
     };
   }, [currUserId]);
 
-  // Handle new messages
   useEffect(() => {
     const handleNewMessage = (msg) => {
-      console.log("New message received:", msg);
       setMessages((prev) => {
-        // Check for duplicates by ID
-        if (prev.some((m) => m.id === msg.id)) {
-          return prev;
-        }
-        // Check for temporary message from the same sender
+        if (prev.some((m) => m.id === msg.id)) return prev;
         const tempIndex = prev.findIndex(
           (m) =>
             m.id?.startsWith("temp-") &&
@@ -167,7 +157,6 @@ const GroupChat = () => {
             Math.abs(new Date(m.createdAt) - new Date(msg.createdAt)) < 5000,
         );
         if (tempIndex !== -1) {
-          // Replace temporary message with server message
           const newMessages = [...prev];
           newMessages[tempIndex] = {
             ...msg,
@@ -175,7 +164,6 @@ const GroupChat = () => {
           };
           return newMessages;
         }
-        // Add new message if no temporary match
         return [...prev, { ...msg, fromUser: msg.senderId === currUserId }];
       });
     };
@@ -187,14 +175,12 @@ const GroupChat = () => {
     };
   }, [currUserId]);
 
-  // Scroll to bottom when messages change
   useEffect(() => {
     if (bottomChatRef.current && messages.length > 0) {
       bottomChatRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
-  // Message sending mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content) => {
       if (!currentZone?.id) throw new Error("No active zone");
@@ -225,7 +211,6 @@ const GroupChat = () => {
     onError: (error, _, { tempMessage }) => {
       setMessages((prev) => prev.filter((m) => m.id !== tempMessage.id));
       toast.error("Failed to send message");
-      console.error("Message send error:", error);
     },
   });
 
@@ -236,10 +221,9 @@ const GroupChat = () => {
     }
   };
 
-  // Calculate distance between coordinates
   const calculateDistance = (pos1, pos2) => {
     if (!pos1 || !pos2) return Infinity;
-    const R = 6371; // Earth radius in km
+    const R = 6371;
     const dLat = ((pos2.latitude - pos1.latitude) * Math.PI) / 180;
     const dLon = ((pos2.longitude - pos1.longitude) * Math.PI) / 180;
     const a =
