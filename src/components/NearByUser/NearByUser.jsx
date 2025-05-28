@@ -9,15 +9,14 @@ const NearbyUsers = () => {
   const myFetch = useFetch();
   const { user: currentUser } = useAuthContext();
   const [userLocation, setUserLocation] = useState(null);
+  const [showAll, setShowAll] = useState(false);
 
-  // Get user's location when component mounts
   useEffect(() => {
     const getCurrentPosition = () => {
       if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude } = position.coords;
-            // console.log("📍 Browser geolocation:", { latitude, longitude });
             setUserLocation({ latitude, longitude });
           },
           (error) => {
@@ -29,50 +28,32 @@ const NearbyUsers = () => {
       }
     };
 
-    // First try to use user location from context if available
     if (currentUser?.latitude && currentUser?.longitude) {
-      console.log("📍 Using user location from context:", {
-        latitude: currentUser.latitude,
-        longitude: currentUser.longitude,
-      });
       setUserLocation({
         latitude: currentUser.latitude,
         longitude: currentUser.longitude,
       });
     } else {
-      // Otherwise try to get current location from browser
       getCurrentPosition();
     }
   }, [currentUser]);
 
-  // Use derived location for API call
   const latitude = userLocation?.latitude;
   const longitude = userLocation?.longitude;
 
-  // console.log("📍 Final location for API call:", { latitude, longitude });
-
-  // Construct the API URL
   const apiUrl = `/location/nearbyusers?lat=${latitude}&lon=${longitude}&radius=10`;
 
-  // Fetch nearby users with user's location data
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["nearby-users", latitude, longitude],
     queryFn: async () => {
-      // console.log("🔗 Calling API:", apiUrl);
-      try {
-        const result = await myFetch(apiUrl);
-        // console.log("✅ API response:", result);
-        return result;
-      } catch (err) {
-        console.error("❌ API error:", err);
-        throw err;
-      }
+      const result = await myFetch(apiUrl);
+      return result;
     },
-    enabled: !!latitude && !!longitude, // Only run query when location is available
+    enabled: !!latitude && !!longitude,
   });
 
-  // Fallback if the response is malformed or empty
   const nearby = data?.nearby || [];
+  const shownUsers = showAll ? nearby : nearby.slice(0, 5);
 
   return (
     <section className="side-content-box">
@@ -87,18 +68,29 @@ const NearbyUsers = () => {
       ) : nearby.length === 0 ? (
         <p>No users nearby.</p>
       ) : (
-        nearby.map((loc) => {
-          const user = {
-            id: loc.user.id,
-            username: loc.user.username,
-            displayName: loc.user.displayName || loc.user.username,
-            profile: {
-              profilePicture: loc.user.profile?.profilePicture || null,
-            },
-            followers: loc.user.followers || [],
-          };
-          return <ProfilePreview key={user.id} user={user} />;
-        })
+        <>
+          {shownUsers.map((loc) => {
+            const user = {
+              id: loc.user.id,
+              username: loc.user.username,
+              displayName: loc.user.displayName || loc.user.username,
+              profile: {
+                profilePicture: loc.user.profile?.profilePicture || null,
+              },
+              followers: loc.user.followers || [],
+            };
+            return <ProfilePreview key={user.id} user={user} />;
+          })}
+
+          {nearby.length > 5 && (
+            <button
+              onClick={() => setShowAll((prev) => !prev)}
+              className="text-sm text-blue-500 hover:underline mt-2"
+            >
+              {showAll ? "Show Less" : "Show More"}
+            </button>
+          )}
+        </>
       )}
     </section>
   );

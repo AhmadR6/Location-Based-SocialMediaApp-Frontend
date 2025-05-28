@@ -96,5 +96,39 @@ const unjoinEvent = async (eventId, token) => {
     throw error;
   }
 };
+async function deleteEvent(eventId, token) {
+  try {
+    const response = await fetch(`${API_URL}/${eventId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-export { fetchEvents, createOrUpdateEvent, joinEvent, unjoinEvent };
+    if (!response.ok) {
+      let errorMessage = "Failed to delete event";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorMessage;
+      } catch (_) {
+        // response body was empty or not JSON
+      }
+      throw new Error(errorMessage);
+    }
+
+    alert("Event deleted successfully!");
+    // Optionally trigger refresh or redirect
+  } catch (err) {
+    console.error("Delete failed:", err);
+    alert(err.message || "Something went wrong while deleting the event.");
+  }
+}
+
+export {
+  fetchEvents,
+  createOrUpdateEvent,
+  joinEvent,
+  unjoinEvent,
+  deleteEvent,
+};

@@ -81,6 +81,13 @@ const MapView = ({ refresh, setRefresh }) => {
   const loadMarkers = async (latitude, longitude) => {
     try {
       const locations = await fetchAllLocations();
+      // Clear previous event markers (but keep the user's location marker)
+      markersRef.current = markersRef.current.filter((marker) => {
+        const isUserMarker =
+          marker.getElement().style.backgroundColor === "green";
+        if (!isUserMarker) marker.remove();
+        return isUserMarker;
+      });
       locations.forEach((location) => {
         // console.log("Location:", location);
         if (location.user._id === user.id) return;
@@ -97,13 +104,14 @@ const MapView = ({ refresh, setRefresh }) => {
       try {
         // Use the provided latitude and longitude instead of userLocation state
         const events = await fetchEvents(latitude, longitude, user.token);
+
         events.forEach((event) => {
           // console.log("Event:", event);
 
           const eventColor = "blue";
           const marker = new mapboxgl.Marker({ color: eventColor })
             .setLngLat([event.longitude, event.latitude])
-            .setPopup(EventsPopup(event, user, refresh, setRefresh))
+            .setPopup(EventsPopup(event, user, refresh, setRefresh, navigate))
             .addTo(mapRef.current);
 
           markersRef.current.push(marker);
@@ -115,6 +123,12 @@ const MapView = ({ refresh, setRefresh }) => {
       console.error("Error loading markers:", error);
     }
   };
+  useEffect(() => {
+    if (userLocation && refresh) {
+      const [longitude, latitude] = userLocation;
+      loadMarkers(latitude, longitude);
+    }
+  }, [refresh]);
 
   return (
     <div>
@@ -123,7 +137,9 @@ const MapView = ({ refresh, setRefresh }) => {
         style={{ height: "80vh", width: "100%" }}
         className="map-container"
       />
-      <button onClick={requestLocation}>Get my Location</button>
+      <button style={{ margin: "15px" }} onClick={requestLocation}>
+        refresh Map
+      </button>
     </div>
   );
 };

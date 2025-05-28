@@ -7,14 +7,21 @@ import {
   IconMapPin,
   IconClock,
   IconInfoCircle,
+  IconUser,
 } from "@tabler/icons-react";
-import { joinEvent, unjoinEvent } from "../../utils/events";
+import { joinEvent, unjoinEvent, deleteEvent } from "../../utils/events";
 /**
  * EventPopup component for displaying event information in a map popup
  * @param {Object} event - Event object containing details to display
  * @param {Object} user - User object containing user details including token
  */
-export default function createEventPopup(event, user, refresh, setRefresh) {
+export default function createEventPopup(
+  event,
+  user,
+  refresh,
+  setRefresh,
+  navigate,
+) {
   // Create container div for the popup
   const container = document.createElement("div");
 
@@ -26,6 +33,7 @@ export default function createEventPopup(event, user, refresh, setRefresh) {
     // State to track if the user has joined the event
     const [hasJoined, setHasJoined] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [creatorUsername, setCreatorUsername] = useState("Unknown User");
 
     // Fetch attendance status when component mounts
     useEffect(() => {
@@ -55,8 +63,34 @@ export default function createEventPopup(event, user, refresh, setRefresh) {
           setIsLoading(false);
         }
       };
+      const fetchCreatorUsername = async () => {
+        try {
+          // Fetch creator username using getUserBasicDetails endpoint
+          const response = await fetch(
+            `${import.meta.env.VITE_API_URL}/users/search/${event.creatorId}`,
+            {
+              method: "GET",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${user.token}`,
+              },
+            },
+          );
+
+          if (response.ok) {
+            const data = await response.json();
+            setCreatorUsername(data.username);
+          } else {
+            setCreatorUsername("Unknown User");
+          }
+        } catch (error) {
+          console.error("Error fetching creator username:", error);
+          setCreatorUsername("Unknown User");
+        }
+      };
 
       checkAttendance();
+      fetchCreatorUsername();
     }, [event.id, user.token]);
 
     // Format the date and time
@@ -91,6 +125,18 @@ export default function createEventPopup(event, user, refresh, setRefresh) {
         );
       }
     };
+    const handleDeleteEvent = async () => {
+      try {
+        await deleteEvent(event.id, user.token);
+        console.log("Event deleted");
+        setRefresh((prev) => !prev); // ✅ refresh after success
+      } catch (error) {
+        console.error("Error deleting event:", error.message);
+        alert(
+          error.message || "Something went wrong while deleting the event.",
+        );
+      }
+    };
 
     return (
       <div className="event-popup">
@@ -110,6 +156,21 @@ export default function createEventPopup(event, user, refresh, setRefresh) {
           <IconMapPin size={16} className="event-popup-icon" />
           <span>{formattedDistance} away</span>
         </div>
+        <div className="event-popup-detail">
+          <IconUser size={16} className="event-popup-icon" />
+          <span
+            onClick={() => {
+              navigate(`/p/users/${event.creatorId}`);
+            }}
+            style={{
+              color: "#62a2f5",
+              cursor: "pointer",
+              textDecoration: "underline",
+            }}
+          >
+            Created by {creatorUsername}
+          </span>
+        </div>
 
         {event.description && (
           <div className="event-popup-description">
@@ -125,6 +186,11 @@ export default function createEventPopup(event, user, refresh, setRefresh) {
         >
           {isLoading ? "Loading..." : hasJoined ? "Unjoin event" : "Join event"}
         </button>
+        {user.id === event.creatorId && (
+          <button className="event-popup-button" onClick={handleDeleteEvent}>
+            Delete Event
+          </button>
+        )}
       </div>
     );
   };
